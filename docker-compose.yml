@@ -1,11 +1,20 @@
 services:
   server:
-    container_name: twmdialer-pbx
-    image: twmdialer-pbx:16.16.2
+    container_name: freepbx-pbx
+    image: freepbx-docker-unimrcp:16.16.2
     ulimits:
       nofile:
         soft: 1048576
         hard: 1048576
+          #extra_hosts:
+          #- "nxtvm104:127.0.0.1"
+          #- "mirror1.freepbx.org:127.0.0.1"
+          #- "mirror2.freepbx.org:127.0.0.1"
+          #- "mirror.freepbx.org:127.0.0.1"
+          #- "katanafpbx.schmoozecom.com:127.0.0.1"
+          #- "keys.gnupg.net:127.0.0.1"
+          #- "pgp.mit.edu:127.0.0.1"
+          #- "keyserver.ubuntu.com:127.0.0.1"
     environment:
       - TZ=${TZ}
       - DBENGINE=${DB_ENGINE}
@@ -31,36 +40,39 @@ services:
       - AMPCGIBIN=${AMPCGIBIN}
       - AMPPLAYBACK=${AMPPLAYBACK}
     volumes:
+      # 對時
+      - /etc/localtime:/etc/localtime:ro
+      
       #before mount ,docker cp freepbx-docker-unimrcp:/etc/odbc.ini ./data/etc/odbc.ini
       # 1. 憑證 (HTTPS 需要)
-      - ./data/certs:/etc/apache2/certs
+      #- ./data/etc/apache2/certs:/etc/apache2/certs
 
       # 2. 網頁程式碼 (FreePBX UI、模組檔案、標記檔 .pbx 都在這)
-      - ./data/var/www/html:/var/www/html
+      #- ./data/var/www/html:/var/www/html
 
       # 3. Asterisk 運行數據 (包含錄音檔、語音信箱、以及你最在意的 freepbx.conf)
-      - ./data/var/lib/asterisk:/var/lib/asterisk
+      #- ./data/var/lib/asterisk:/var/lib/asterisk
 
       # 4. Asterisk 設定檔 (sip.conf, extensions.conf 等)
-      - ./data/etc/asterick:/etc/asterisk
+      #- ./data/etc/asterick:/etc/asterisk
 
       # 5. 日誌 (除錯必備)
-      - ./data/var/log/asterisk:/var/log/asterisk
+      #- ./data/var/log/asterisk:/var/log/asterisk
 
       # 6. 資料庫連線驅動 (如果有自定義 ODBC 對接外部資料庫才需要)
-      - ./data/etc/odbc.ini:/etc/odbc.ini
+      #- ./data/etc/odbc.ini:/etc/odbc.ini
 
       #unimrcp
-      - ./data/opt/unimrcp/conf/unimrcpclient.xml:/opt/unimrcp/conf/unimrcpclient.xml
-      - ./data/etc/asterisk/mrcp.conf:/etc/asterisk/mrcp.conf
+      #- ./data/opt/unimrcp/conf/unimrcpclient.xml:/opt/unimrcp/conf/unimrcpclient.xml
+      #- ./data/etc/asterisk/mrcp.conf:/etc/asterisk/mrcp.conf
+      
       #install so
-      - ./data/usr/lib64/asterisk:/usr/lib64/asterisk  
-
-        #- ./data/usr:/usr/lib64/asterisk
-        #- varvol:/var/lib/asterisk
-        #- etcvol:/etc/asterisk
-        #- usrvol:/usr/lib64/asterisk
-        #- wwwvol:/var/www/html  
+      - ./data/etc/apache2/certs:/etc/apache2/certs
+      - usrvol:/usr/lib64/asterisk
+      - varvol:/var/lib/asterisk
+      - etcvol:/etc/asterisk
+      - wwwvol:/var/www/html  
+      - /var/log/asterisk:/var/log/asterisk
 
     network_mode: "host"
     depends_on:
@@ -68,14 +80,25 @@ services:
     restart: always
 
   mariadb:
-    container_name: twmdialer-db
+    container_name: freepbx-db
     image: mariadb:10.11
     restart: always
     volumes:
       - ./datadb:/var/lib/mysql
       - ./sql:/docker-entrypoint-initdb.d
+      - /etc/localtime:/etc/localtime:ro
     environment:
-      - TZ=${TZ}
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - TZ=Asia/Taipei
+      - MYSQL_ROOT_PASSWORD=asterisk
     network_mode: "host"
-      
+
+    
+volumes:
+  varvol:
+  etcvol:
+  usrvol:
+  wwwvol:
+     
+
+
+

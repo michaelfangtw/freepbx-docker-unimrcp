@@ -85,6 +85,13 @@ RUN \
 ADD run-httpd.sh /run-httpd.sh
 RUN chmod -v +x /run-httpd.sh
 
+#for localhost ssl
+RUN mkdir /etc/apache2/certs -p
+RUN \
+    openssl req -x509 -newkey rsa:4096 \
+    -keyout /etc/apache2/certs/server.key \
+    -out /etc/apache2/certs/server.crt \
+    -sha256 -days 365 -nodes -subj "/C=US/ST=State/L=City/O=Org/CN=localhost"
 
 ######################################################################################################
 ARG UNIMRCP_USER
@@ -104,6 +111,11 @@ RUN mkdir -p /etc/apt/auth.conf.d \
         asterisk-res-speech-unimrcp 
 #    && rm -rf /var/lib/apt/lists/* \
 #    && rm -f /etc/apt/auth.conf.d/unimrcp.conf
+
+#res_speech_unimrcp.so  搭配/opt/unimrcp/conf/unimrcpclient.xml     (缺檔案會造成無法載入)
+# app_unimrcp.so    搭配 /etc/asterisk/mrcp.conf  (缺檔案會造成無法載入)
+COPY ./unimrcpclient.xml /opt/unimrcp/conf/unimrcpclient.xml
+COPY ./mrcp.conf /etc/asterisk/mrcp.conf
 ######################################################################################################
 
 #VOLUME [ "/var/lib/asterisk", "/etc/asterisk", "/usr/lib64/asterisk", "/var/www/html", "/var/log/asterisk" ]

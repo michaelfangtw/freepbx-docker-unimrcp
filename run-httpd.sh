@@ -16,6 +16,9 @@ sleep 5
 --ampbin=${AMPBIN} --ampsbin=${AMPSBIN} --ampcgibin=${AMPCGIBIN}  --ampplayback=${AMPPLAYBACK} -n
 # configure freepbx
 fwconsole ma installall
+#install advanced
+fwconsole ma downloadinstall configedit
+fwconsole ma downloadinstall miscdests miscapps
 fwconsole reload
 fwconsole restart
 touch /var/www/html/.pbx

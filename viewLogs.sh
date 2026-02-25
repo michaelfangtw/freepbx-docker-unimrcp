@@ -1,1 +1,1 @@
-docker logs twmdialer-pbx16 -f
+docker logs freepbx-pbx -f
