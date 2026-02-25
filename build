@@ -13,3 +13,6 @@ TAG=16.16.2
 
 docker build -t freepbx-docker-unimrcp:$TAG .  --build-arg UNIMRCP_USER="${UNIMRCP_USER}"  --build-arg UNIMRCP_PASS="${UNIMRCP_PASS}"
 
+#TAG=16.16.2
+#docker tag freepbx-docker-unimrcp:$TAG michaelfangtw/freepbx-docker-unimrcp:$TAG
+#docker push michaelfangtw/freepbx-docker-unimrcp:$TAG
