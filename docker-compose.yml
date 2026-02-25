@@ -1,0 +1,81 @@
+services:
+  server:
+    container_name: twmdialer-pbx
+    image: twmdialer-pbx:16.16.2
+    ulimits:
+      nofile:
+        soft: 1048576
+        hard: 1048576
+    environment:
+      - TZ=${TZ}
+      - DBENGINE=${DB_ENGINE}
+      - DBHOST=${DB_HOST}
+      - DBPORT=${DB_PORT}
+      - DBNAME=${DB_NAME}
+      - DBUSER=${DB_USER}
+      - DBPASS=${DB_PASS}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - CDRDBNAME=asteriskcdrdb
+      - USER=${ASTERISK_USER}
+      - GROUP=${ASTERISK_GROUP}
+      - WEBROOT=${WEBROOT}
+      - ASTETCDIR=${ASTETCDIR}
+      - ASTMODDIR=${ASTMODDIR}
+      - ASTVARLIBDIR=${ASTVARLIBDIR}
+      - ASTAGIDIR=${ASTAGIDIR}
+      - ASTSPOOLDIR=${ASTSPOOLDIR}
+      - ASTRUNDIR=${ASTRUNDIR}
+      - AMPBIN=${AMPBIN}
+      - AMPSBIN=${AMPSBIN}
+      - AMPCGIBIN=${AMPCGIBIN}
+      - AMPPLAYBACK=${AMPPLAYBACK}
+    volumes:
+      #before mount ,docker cp freepbx-docker-unimrcp:/etc/odbc.ini ./data/etc/odbc.ini
+      # 1. 憑證 (HTTPS 需要)
+      - ./data/certs:/etc/apache2/certs
+
+      # 2. 網頁程式碼 (FreePBX UI、模組檔案、標記檔 .pbx 都在這)
+      - ./data/var/www/html:/var/www/html
+
+      # 3. Asterisk 運行數據 (包含錄音檔、語音信箱、以及你最在意的 freepbx.conf)
+      - ./data/var/lib/asterisk:/var/lib/asterisk
+
+      # 4. Asterisk 設定檔 (sip.conf, extensions.conf 等)
+      - ./data/etc/asterick:/etc/asterisk
+
+      # 5. 日誌 (除錯必備)
+      - ./data/var/log/asterisk:/var/log/asterisk
+
+      # 6. 資料庫連線驅動 (如果有自定義 ODBC 對接外部資料庫才需要)
+      - ./data/etc/odbc.ini:/etc/odbc.ini
+
+      #unimrcp
+      - ./data/opt/unimrcp/conf/unimrcpclient.xml:/opt/unimrcp/conf/unimrcpclient.xml
+      - ./data/etc/asterisk/mrcp.conf:/etc/asterisk/mrcp.conf
+      #install so
+      - ./data/usr/lib64/asterisk:/usr/lib64/asterisk  
+
+        #- ./data/usr:/usr/lib64/asterisk
+        #- varvol:/var/lib/asterisk
+        #- etcvol:/etc/asterisk
+        #- usrvol:/usr/lib64/asterisk
+        #- wwwvol:/var/www/html  
+
+    network_mode: "host"
+    depends_on:
+      - mariadb
+    restart: always
+
+  mariadb:
+    container_name: twmdialer-db
+    image: mariadb:10.11
+    restart: always
+    volumes:
+      - ./datadb:/var/lib/mysql
+      - ./sql:/docker-entrypoint-initdb.d
+    environment:
+      - TZ=${TZ}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    network_mode: "host"
+      
