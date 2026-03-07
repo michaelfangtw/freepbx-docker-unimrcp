@@ -82,7 +82,7 @@ services:
       - /etc/localtime:/etc/localtime:ro
     environment:
       - TZ=Asia/Taipei
-      - MYSQL_ROOT_PASSWORD=asterisk
+      - MYSQL_ROOT_PASSWORD=your_root_password
     network_mode: "host"
 
     
