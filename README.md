@@ -25,7 +25,7 @@ Edit the `.env` file to set UNIMRCP credentials and database parameters.
 ### 2. Build Image / 構建映像
 
 ```bash
-./build
+./build.s.shh
 ```
 
 ### 3. Start Containers / 啟動容器
