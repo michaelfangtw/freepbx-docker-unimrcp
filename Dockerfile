@@ -68,10 +68,10 @@ RUN \
   a2enmod php7.4 && \
   rm /var/www/html/index.html
 # configure odbc
-COPY odbc.ini /etc/odbc.ini
-COPY odbcinst.ini /etc/odbcinst.ini
+COPY build/odbc.ini /etc/odbc.ini
+COPY build/odbcinst.ini /etc/odbcinst.ini
 # configure ssl
-COPY ./default-ssl.conf /etc/apache2/sites-available/default-ssl.conf
+COPY build/default-ssl.conf /etc/apache2/sites-available/default-ssl.conf
 RUN \
     a2ensite default-ssl && \
     a2enmod ssl
@@ -84,43 +84,46 @@ RUN \
   apt-get clean
 ADD run-httpd.sh /run-httpd.sh
 RUN chmod -v +x /run-httpd.sh
-
-#for localhost ssl
-RUN mkdir /etc/apache2/certs -p
-RUN \
-    openssl req -x509 -newkey rsa:4096 \
-    -keyout /etc/apache2/certs/server.key \
-    -out /etc/apache2/certs/server.crt \
-    -sha256 -days 365 -nodes -subj "/C=US/ST=State/L=City/O=Org/CN=localhost"
-
+RUN cat /etc/asterisk/asterisk.conf
 ######################################################################################################
 ARG UNIMRCP_USER
 ARG UNIMRCP_PASS
-
+RUN echo "" >/var/www/html/test.txt
 RUN mkdir -p /etc/apt/auth.conf.d \
     && echo "machine unimrcp.org login ${UNIMRCP_USER} password ${UNIMRCP_PASS}" > /etc/apt/auth.conf.d/unimrcp.conf \
     && chmod 600 /etc/apt/auth.conf.d/unimrcp.conf \
     && echo "deb [arch=amd64 trusted=yes] https://unimrcp.org/repo/apt/ focal main asterisk-16" > /etc/apt/sources.list.d/unimrcp.list \
-    # 加入 dpkg 的強制選項：--force-confold 會自動幫您保留舊檔！
-    && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-        -o Dpkg::Options::="--force-confdef" \
-        -o Dpkg::Options::="--force-confold" \
-        --allow-unauthenticated \
-        unimrcp-client \
-        asterisk-app-unimrcp \
-        asterisk-res-speech-unimrcp 
-#    && rm -rf /var/lib/apt/lists/* \
-#    && rm -f /etc/apt/auth.conf.d/unimrcp.conf
-
-#res_speech_unimrcp.so  搭配/opt/unimrcp/conf/unimrcpclient.xml     (缺檔案會造成無法載入)
-# app_unimrcp.so    搭配 /etc/asterisk/mrcp.conf  (缺檔案會造成無法載入)
-COPY ./unimrcpclient.xml /opt/unimrcp/conf/unimrcpclient.xml
-COPY ./mrcp.conf /etc/asterisk/mrcp.conf
+    ## public key 
+    && wget -O /etc/apt/trusted.gpg.d/unimrcp.asc https://unimrcp.org/keys/unimrcp-gpg-key.public \
+    && apt-get update \
+    # 1. 安裝 UniMRCP Client 與編譯所需的開發套件 and sngrep
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y unimrcp-client unimrcp-client-dev git pkg-config \
+    # 2. 下載 asterisk-unimrcp 模組原始碼
+    && cd /usr/local/src \
+    && git clone https://github.com/unispeech/asterisk-unimrcp.git \
+    && cd asterisk-unimrcp \
+    # 3. 設定環境並進行編譯 (指定 Asterisk 與 UniMRCP 的正確路徑)
+    && ./bootstrap \
+    && ./configure --with-asterisk-version=16 \
+                   --with-asterisk=/usr \
+                   --with-unimrcp=/opt/unimrcp \
+                   --prefix=/usr/lib64/asterisk/modules \
+    && make \
+    && make install \ 
+    # 4. 清理暫存檔與憑證
+   && rm -rf /usr/local/src/asterisk-unimrcp \
+   && rm -rf /var/lib/apt/lists/* \
+   && rm -f /etc/apt/auth.conf.d/unimrcp.conf
 ######################################################################################################
+RUN chown asterisk:asterisk /usr/lib64/asterisk/modules
+COPY ./build/unimrcpclient.xml /opt/unimrcp/conf/unimrcpclient.xml
+COPY ./build/mrcp.conf /etc/asterisk/mrcp.conf
 
 #VOLUME [ "/var/lib/asterisk", "/etc/asterisk", "/usr/lib64/asterisk", "/var/www/html", "/var/log/asterisk" ]
 
 #EXPOSE 443 4569 4445 5060 5060/udp 5160/udp 18000-18100/udp
+#PLEASE RUN IN HOST MODE
 
 CMD ["/run-httpd.sh"]
+
 

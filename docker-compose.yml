@@ -6,15 +6,8 @@ services:
       nofile:
         soft: 1048576
         hard: 1048576
-          #extra_hosts:
-          #- "nxtvm104:127.0.0.1"
-          #- "mirror1.freepbx.org:127.0.0.1"
-          #- "mirror2.freepbx.org:127.0.0.1"
-          #- "mirror.freepbx.org:127.0.0.1"
-          #- "katanafpbx.schmoozecom.com:127.0.0.1"
-          #- "keys.gnupg.net:127.0.0.1"
-          #- "pgp.mit.edu:127.0.0.1"
-          #- "keyserver.ubuntu.com:127.0.0.1"
+    extra_hosts:
+      - "pbx1:127.0.0.1"
     environment:
       - TZ=${TZ}
       - DBENGINE=${DB_ENGINE}
@@ -98,7 +91,5 @@ volumes:
   etcvol:
   usrvol:
   wwwvol:
-     
-
 
 
